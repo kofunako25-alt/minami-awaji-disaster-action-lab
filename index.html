@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f1">
+  <title>南あわじ防災アクションラボ</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-top"><span class="eyebrow">WORKSHOP ARCHIVE · MINAMI-AWAJI</span><div class="hero-links"><a href="guide.html">使い方ガイド</a><span class="version">研究用プロトタイプ</span></div></div>
+    <div class="hero-content"><div><p class="kicker">災害関連死を減らすために、地域で何ができるか</p><h1>南あわじ<br><em>防災アクションラボ</em></h1><p class="intro">ワークショップに集まった声を探し、避難所の課題を考えるための資料室です。</p></div><div class="hero-stamp"><span>IDEAS</span><b>273</b><small>福良公民館の記録</small></div></div>
+    <nav class="tabs" aria-label="メインメニュー"><button class="tab active" data-page="ideas">アイデア図鑑 <span>01</span></button><button class="tab" data-page="scenario">場面から考える <span>02</span></button><button class="tab" data-page="analysis">データを見る <span>03</span></button></nav>
+  </header>
+  <main>
+    <section class="notice"><span class="notice-mark">i</span><p><b>この記録が示すこと</b><br>ワークショップで書かれた意見の一覧です。実施状況や効果を検証したデータではありません。書かれた内容と、この試作での分類・検索を区別してご覧ください。</p></section>
+    <section id="page-ideas" class="page active">
+      <div class="section-heading"><div><span class="eyebrow">01 / IDEAS</span><h2>防災アイデア図鑑</h2><p>まずは福良地区公民館の記録を中心に、会場・色・班・項目で絞り込めます。</p></div><span class="record-total" id="idea-count"></span></div>
+      <div class="filters"><label class="search-label">キーワード<input id="search" type="search" placeholder="例：トイレ、声かけ、情報" autocomplete="off"></label><label>会場<select id="venue-filter"></select></label><label>付箋の色<select id="color-filter"><option value="">すべて</option></select></label><label>グループ<select id="group-filter"><option value="">すべて</option></select></label><label>フローチャート項目<select id="flow-filter"><option value="">すべて</option></select></label><button id="clear-filters" class="button subtle">条件をクリア</button></div>
+      <p class="color-note" id="color-help"></p><div id="idea-list" class="idea-list" aria-live="polite"></div><button id="load-more" class="button load-more">続きを見る</button>
+    </section>
+    <section id="page-scenario" class="page">
+      <div class="section-heading"><div><span class="eyebrow">02 / THINK THROUGH</span><h2>場面から考える</h2><p>避難所で起こりうる課題をひとつ選び、記録の中に関連する言葉を探します。</p></div></div>
+      <div class="scenario-layout"><div class="scenario-picker"><span class="eyebrow">CHOOSE A CHALLENGE</span><div id="scenario-options" class="scenario-options"></div><p class="microcopy">「関連する記録」は、選んだ場面に設定した語が記録文に含まれるものを表示します。語の選定は試作上の編集判断です。</p></div><div class="scenario-result"><div class="result-label">WORKSHOP NOTES</div><h3 id="scenario-title">場面を選んでください</h3><div id="scenario-list" class="idea-list"></div></div></div>
+    </section>
+    <section id="page-analysis" class="page">
+      <div class="section-heading"><div><span class="eyebrow">03 / DATA OVERVIEW</span><h2>記録の分布を見る</h2><p>空欄を除いた記録数です。色の意味や記録項目は会場ごとに異なります。</p></div></div>
+      <div class="dashboard-controls"><label>会場<select id="dashboard-venue"></select></label><span class="dashboard-count" id="dashboard-total"></span></div>
+      <div class="chart-grid"><article class="chart-card"><h3>会場ごとの記録数</h3><p class="chart-sub">空白の文言行を除いた記録行数です。</p><div id="chart-venues" class="bars"></div></article><article class="chart-card"><h3>付箋の色・記録区分</h3><p class="chart-sub" id="chart-color-sub"></p><div id="chart-colors" class="bars"></div></article><article class="chart-card"><h3>グループ</h3><p class="chart-sub">福良公民館のみ班番号を収録。空欄は未記入として扱います。</p><div id="chart-groups" class="bars"></div></article><article class="chart-card wide"><h3>フローチャート項目</h3><p class="chart-sub">複数項目に対応する記録は項目ごとに数えます。福良公民館の「0」は項目番号として扱わず、未割当（0）にまとめています。</p><div id="chart-flow" class="bars compact"></div></article></div>
+      <details class="methods"><summary>集計と読み方について</summary><ul><li>タブ付きの代替シートは重複を避けるため使わず、原シートを会場ごとに1つ採用しました。</li><li>繰り返し出た意見は統合せず、記録行をそのまま数えています。</li><li>空白の文言行は除外しました。分類欄の空欄は未記入として表示します。</li><li>会場間で付箋の色の意味は異なります。同じ色を同じ意味として比較しません。</li></ul></details>
+    </section>
+  </main>
+  <footer><span>南あわじ防災アクションラボ</span><span>研究検討用 · 出典：ワークショップExcelとデータ説明資料</span><a href="guide.html">使い方ガイド</a><a href="README.md">データの扱い・起動方法</a></footer>
+  <script src="data.js"></script><script src="app.js"></script>
+</body>
+</html>
+

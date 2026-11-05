@@ -37,7 +37,7 @@
     $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認'&&r.flowStatus!=='完成版未掲載')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
     $('color-help').textContent=selected.venue+'：'+selected.colorHelp;
     $('flow-note').textContent=selected.id==='elementary'
-      ? '福良小学校は完成版Excelの50件を反映しています。残る154件は完成版に記載がないため、旧番号を表示せず「完成版に記載なし」としています。「不明」は原表記のままです。'
+      ? '福良小学校は完成版Excelの50件と、追加で共有された154件の番号一覧を反映しています。対応項目名や「不明」の理由は、一覧に記載がある場合に補足表示します。'
       : '複数の番号がある記録は、番号ごとに絞り込み・集計します。';
   }
   function flowNumbers(raw){

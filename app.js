@@ -29,8 +29,8 @@
   }
   function refreshFilters(){
     const selected=byId[$('venue-filter').value]||data[0], records=selected.records;
-    $('group-filter-wrap').hidden=selected.id==='elementary';
-    if(selected.id==='elementary')$('group-filter').value='';
+    $('group-filter-wrap').hidden=selected.id!=='primary';
+    if(selected.id!=='primary')$('group-filter').value='';
     const colors=[...new Set(records.map(r=>colorName(r.color)))].sort();
     $('color-filter').innerHTML=optionLabel('','すべて')+colors.map(x=>optionLabel(x,x)).join('');
     const groups=[...new Set(records.map(r=>normalize(r.group)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}));
@@ -75,7 +75,7 @@
   }
   function card(r){
     let tags=[r.venue,colorName(r.color)];
-    if(r.venueId!=='elementary'){
+    if(r.venueId==='primary'){
       if(r.group) tags.push(r.group==='0'?'グループ未記入/0':`グループ ${r.group}`);
       else tags.push('グループ情報なし');
     }
@@ -115,7 +115,7 @@
   }
   function renderDashboard(){
     const selected=byId[$('dashboard-venue').value]||data[0], all=data.flatMap(d=>d.records.map(r=>({...r,venueId:d.id})));
-    $('chart-groups').closest('.chart-card').hidden=selected.id==='elementary';
+    $('chart-groups').closest('.chart-card').hidden=selected.id!=='primary';
     $('dashboard-total').textContent=`${selected.records.length} 件（記録行）`;
     bars('chart-venues',data.map(d=>[d.venue,d.records.length]),Math.max(...data.map(d=>d.records.length)));
     const colorCounts={}; selected.records.forEach(r=>{const label=colorName(r.color);colorCounts[label]=(colorCounts[label]||0)+1;});

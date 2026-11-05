@@ -1,6 +1,13 @@
 (() => {
   const data = window.WORKSHOP_DATA;
   const byId = Object.fromEntries(data.map(d => [d.id,d]));
+  const schoolFlowUpdates = window.FUKURA_SCHOOL_FLOW || {};
+  (byId.elementary?.records || []).forEach(r => {
+    const update = schoolFlowUpdates[String(r.sourceRow)];
+    if (!update) return;
+    r.flow = update.flow;
+    r.flowStatus = update.status;
+  });
   const $ = id => document.getElementById(id);
   const normalize = s => String(s ?? '').normalize('NFKC').trim();
   const colorName = c => c || '未記入';
@@ -24,20 +31,46 @@
     $('color-filter').innerHTML=optionLabel('','すべて')+colors.map(x=>optionLabel(x,x)).join('');
     const groups=[...new Set(records.map(r=>normalize(r.group)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}));
     $('group-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.group))?optionLabel('__blank','未記入'): '')+groups.map(x=>optionLabel(x,x==='0'?'未記入/0':`${x}班`)).join('');
-    const flows=[...new Set(records.map(r=>normalize(r.flow)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}));
-    $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow))?optionLabel('__blank','未記入'): '')+flows.map(x=>optionLabel(x,x==='0'?'未割当（0）':`項目 ${x}`)).join('');
+    const flowKeys=[...new Set(records.flatMap(flowKeysForRecord))].sort((a,b)=>flowOptionLabel(a).localeCompare(flowOptionLabel(b),'ja',{numeric:true}));
+    $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
     $('color-help').textContent=selected.venue+'：'+selected.colorHelp;
+    $('flow-note').textContent=selected.id==='elementary'
+      ? '福良小学校の番号は分類表の内容です。推定番号には「推定」、確認できない番号には「要確認」と表示しています。'
+      : '複数の番号がある記録は、番号ごとに絞り込み・集計します。';
+  }
+  function flowNumbers(raw){
+    const s=normalize(raw);
+    if(!s)return [];
+    return s.split(/[、,，;；\s]+/).filter(Boolean);
+  }
+  function flowKeysForRecord(r){
+    const nums=flowNumbers(r.flow);
+    if(r.flowStatus==='要確認')return nums.length?nums.map(n=>'review:'+n):['review:blank'];
+    return nums;
+  }
+  function flowOptionLabel(key){
+    if(key==='review:blank')return '要確認（番号未確定）';
+    if(key.startsWith('review:'))return `要確認：元番号 ${key.slice(7)}`;
+    return key==='0'?'未割当（0）':`項目 ${key}`;
+  }
+  function flowDisplay(r){
+    const nums=flowNumbers(r.flow);
+    if(r.flowStatus==='要確認')return nums.length?[`番号要確認（元番号 ${nums.join('・')}）`]:['番号要確認'];
+    if(!nums.length)return ['項目情報なし'];
+    if(nums.length===1&&nums[0]==='0')return ['項目未割当（0）'];
+    const suffix=r.flowStatus==='推定'?'（推定）':r.flowStatus==='既存番号を採用'?'（元記入）':'';
+    return [nums.map(n=>`項目 ${n}`).join('・')+suffix];
   }
   function filteredRecords(){
     const venue=$('venue-filter').value, query=normalize($('search').value).toLowerCase(), color=$('color-filter').value,group=$('group-filter').value,flow=$('flow-filter').value;
     return data.filter(d=>!venue||d.id===venue).flatMap(d=>d.records.map(r=>({...r,venue:d.venue,venueId:d.id}))).filter(r=>
-      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!group||(group==='__blank'?!normalize(r.group):normalize(r.group)===group))&&(!flow||(flow==='__blank'?!normalize(r.flow):normalize(r.flow)===flow)));
+      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!group||(group==='__blank'?!normalize(r.group):normalize(r.group)===group))&&(!flow||(flow==='__blank'?!normalize(r.flow)&&r.flowStatus!=='要確認':flowKeysForRecord(r).includes(flow))));
   }
   function card(r){
     let tags=[r.venue,colorName(r.color)];
     if(r.group) tags.push(r.group==='0'?'グループ未記入/0':`グループ ${r.group}`);
     else tags.push('グループ情報なし');
-    if(r.flow) tags.push(r.flow==='0'?'項目未割当（0）':`項目 ${r.flow}`); else tags.push('項目情報なし');
+    tags.push(...flowDisplay(r));
     return `<article class="idea-card"><div class="idea-text">${esc(r.text)}</div><div class="idea-meta">${tags.map((t,i)=>`<span class="tag ${i===1?'color-'+esc(colorName(r.color)):''}">${esc(t)}</span>`).join('')}</div></article>`;
   }
   function renderIdeas(){
@@ -62,11 +95,13 @@
     $(target).innerHTML=entries.map(([label,value],i)=>`<div class="bar-row"><span class="bar-label">${esc(label)}</span><div class="bar-track" role="img" aria-label="${esc(label)} ${value}件"><div class="bar-fill ${chartColors[i%chartColors.length]}" style="width:${Math.max(value?1:0,value/max*100)}%"></div></div><span class="bar-value">${value}</span></div>`).join('');
   }
   function flowParts(raw){
-    if(!raw)return [];
-    const s=normalize(raw);
-    if(s==='0')return ['未割当（0）'];
-    const parts=s.split(/[、,，\s]+/).filter(Boolean);
-    return parts.map(x=>/^\d+$/.test(x)?`項目 ${Number(x)}`:`要確認：${x}`);
+    const r=raw;
+    const nums=flowNumbers(r.flow);
+    if(r.flowStatus==='要確認')return nums.length?nums.map(n=>`要確認：元番号 ${n}`):['要確認（番号なし）'];
+    if(!nums.length)return [];
+    if(nums.length===1&&nums[0]==='0')return ['未割当（0）'];
+    const suffix=r.flowStatus==='推定'?'（推定）':r.flowStatus==='既存番号を採用'?'（元記入）':'';
+    return nums.map(x=>/^\d+$/.test(x)?`項目 ${Number(x)}${suffix}`:`要確認：${x}`);
   }
   function renderDashboard(){
     const selected=byId[$('dashboard-venue').value]||data[0], all=data.flatMap(d=>d.records.map(r=>({...r,venueId:d.id})));
@@ -80,7 +115,7 @@
       const groups={}; selected.records.forEach(r=>{const k=normalize(r.group)||'未記入';groups[k]=(groups[k]||0)+1;});
       bars('chart-groups',Object.entries(groups).sort((a,b)=>a[0]==='未記入'?1:b[0]==='未記入'?-1:a[0].localeCompare(b[0],'ja',{numeric:true})).map(([k,v])=>[k==='未記入'?k:`${k}班`,v]),Math.max(...Object.values(groups)));
     } else bars('chart-groups',[],1,'この会場の原シートにグループ番号欄はありません。');
-    const flows={}; selected.records.forEach(r=>{const parts=flowParts(r.flow);if(!parts.length)flows['未記入']=(flows['未記入']||0)+1;else parts.forEach(k=>flows[k]=(flows[k]||0)+1);});
+    const flows={}; selected.records.forEach(r=>{const parts=flowParts(r);if(!parts.length)flows['未記入']=(flows['未記入']||0)+1;else parts.forEach(k=>flows[k]=(flows[k]||0)+1);});
     const flowEntries=Object.entries(flows).sort((a,b)=>a[0]==='未記入'?1:b[0]==='未記入'?-1:a[0].localeCompare(b[0],'ja',{numeric:true}));
     bars('chart-flow',flowEntries,Math.max(1,...Object.values(flows)));
   }

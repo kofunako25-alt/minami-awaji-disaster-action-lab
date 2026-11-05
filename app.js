@@ -3,10 +3,12 @@
   const byId = Object.fromEntries(data.map(d => [d.id,d]));
   const schoolFlowUpdates = window.FUKURA_SCHOOL_FLOW || {};
   (byId.elementary?.records || []).forEach(r => {
+    delete r.group;
     const update = schoolFlowUpdates[String(r.sourceRow)];
     if (!update) return;
     r.flow = update.flow;
-    r.flowStatus = update.status;
+    if (update.status) r.flowStatus = update.status;
+    else delete r.flowStatus;
   });
   const $ = id => document.getElementById(id);
   const normalize = s => String(s ?? '').normalize('NFKC').trim();
@@ -27,6 +29,8 @@
   }
   function refreshFilters(){
     const selected=byId[$('venue-filter').value]||data[0], records=selected.records;
+    $('group-filter-wrap').hidden=selected.id==='elementary';
+    if(selected.id==='elementary')$('group-filter').value='';
     const colors=[...new Set(records.map(r=>colorName(r.color)))].sort();
     $('color-filter').innerHTML=optionLabel('','すべて')+colors.map(x=>optionLabel(x,x)).join('');
     const groups=[...new Set(records.map(r=>normalize(r.group)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}));
@@ -35,25 +39,28 @@
     $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
     $('color-help').textContent=selected.venue+'：'+selected.colorHelp;
     $('flow-note').textContent=selected.id==='elementary'
-      ? '福良小学校の番号は分類表の内容です。推定番号には「推定」、確認できない番号には「要確認」と表示しています。'
+      ? '福良小学校は完成版Excelの50件を反映しています。「不明」も原表記のまま表示し、対象外の記録は元データの番号を保っています。'
       : '複数の番号がある記録は、番号ごとに絞り込み・集計します。';
   }
   function flowNumbers(raw){
     const s=normalize(raw);
-    if(!s)return [];
-    return s.split(/[、,，;；\s]+/).filter(Boolean);
+    if(!s||s==='不明')return [];
+    return s.split(/[・、,，;；\s]+/).filter(Boolean);
   }
   function flowKeysForRecord(r){
+    if(normalize(r.flow)==='不明')return ['unknown'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?nums.map(n=>'review:'+n):['review:blank'];
     return nums;
   }
   function flowOptionLabel(key){
+    if(key==='unknown')return '不明';
     if(key==='review:blank')return '要確認（番号未確定）';
     if(key.startsWith('review:'))return `要確認：元番号 ${key.slice(7)}`;
     return key==='0'?'未割当（0）':`項目 ${key}`;
   }
   function flowDisplay(r){
+    if(normalize(r.flow)==='不明')return ['不明'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?[`番号要確認（元番号 ${nums.join('・')}）`]:['番号要確認'];
     if(!nums.length)return ['項目情報なし'];
@@ -68,8 +75,10 @@
   }
   function card(r){
     let tags=[r.venue,colorName(r.color)];
-    if(r.group) tags.push(r.group==='0'?'グループ未記入/0':`グループ ${r.group}`);
-    else tags.push('グループ情報なし');
+    if(r.venueId!=='elementary'){
+      if(r.group) tags.push(r.group==='0'?'グループ未記入/0':`グループ ${r.group}`);
+      else tags.push('グループ情報なし');
+    }
     tags.push(...flowDisplay(r));
     return `<article class="idea-card"><div class="idea-text">${esc(r.text)}</div><div class="idea-meta">${tags.map((t,i)=>`<span class="tag ${i===1?'color-'+esc(colorName(r.color)):''}">${esc(t)}</span>`).join('')}</div></article>`;
   }
@@ -96,6 +105,7 @@
   }
   function flowParts(raw){
     const r=raw;
+    if(normalize(r.flow)==='不明')return ['不明'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?nums.map(n=>`要確認：元番号 ${n}`):['要確認（番号なし）'];
     if(!nums.length)return [];
@@ -105,6 +115,7 @@
   }
   function renderDashboard(){
     const selected=byId[$('dashboard-venue').value]||data[0], all=data.flatMap(d=>d.records.map(r=>({...r,venueId:d.id})));
+    $('chart-groups').closest('.chart-card').hidden=selected.id==='elementary';
     $('dashboard-total').textContent=`${selected.records.length} 件（記録行）`;
     bars('chart-venues',data.map(d=>[d.venue,d.records.length]),Math.max(...data.map(d=>d.records.length)));
     const colorCounts={}; selected.records.forEach(r=>{const label=colorName(r.color);colorCounts[label]=(colorCounts[label]||0)+1;});

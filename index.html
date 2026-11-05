@@ -16,8 +16,8 @@
   <main>
     <section class="notice"><span class="notice-mark">i</span><p><b>この記録が示すこと</b><br>ワークショップで書かれた意見の一覧です。実施状況や効果を検証したデータではありません。書かれた内容と、この試作での分類・検索を区別してご覧ください。</p></section>
     <section id="page-ideas" class="page active">
-      <div class="section-heading"><div><span class="eyebrow">01 / IDEAS</span><h2>防災アイデア図鑑</h2><p>まずは福良地区公民館の記録を中心に、会場・色・班・項目で絞り込めます。</p></div><span class="record-total" id="idea-count"></span></div>
-      <div class="filters"><label class="search-label">キーワード<input id="search" type="search" placeholder="例：トイレ、声かけ、情報" autocomplete="off"></label><label>会場<select id="venue-filter"></select></label><label>付箋の色<select id="color-filter"><option value="">すべて</option></select></label><label id="group-filter-wrap">グループ<select id="group-filter"><option value="">すべて</option></select></label><label>フローチャート項目<select id="flow-filter"><option value="">すべて</option></select></label><button id="clear-filters" class="button subtle">条件をクリア</button></div>
+      <div class="section-heading"><div><span class="eyebrow">01 / IDEAS</span><h2>防災アイデア図鑑</h2><p>会場・付箋の色・フローチャート項目で絞り込めます。</p></div><span class="record-total" id="idea-count"></span></div>
+      <div class="filters"><label class="search-label">キーワード<input id="search" type="search" placeholder="例：トイレ、声かけ、情報" autocomplete="off"></label><label>会場<select id="venue-filter"></select></label><label>付箋の色<select id="color-filter"><option value="">すべて</option></select></label><label>フローチャート項目<select id="flow-filter"><option value="">すべて</option></select></label><button id="clear-filters" class="button subtle">条件をクリア</button></div>
       <p class="color-note" id="color-help"></p><p class="microcopy" id="flow-note"></p><div id="idea-list" class="idea-list" aria-live="polite"></div><button id="load-more" class="button load-more">続きを見る</button>
     </section>
     <section id="page-scenario" class="page">
@@ -27,7 +27,7 @@
     <section id="page-analysis" class="page">
       <div class="section-heading"><div><span class="eyebrow">03 / DATA OVERVIEW</span><h2>記録の分布を見る</h2><p>空欄を除いた記録数です。色の意味や記録項目は会場ごとに異なります。</p></div></div>
       <div class="dashboard-controls"><label>会場<select id="dashboard-venue"></select></label><span class="dashboard-count" id="dashboard-total"></span></div>
-      <div class="chart-grid"><article class="chart-card"><h3>会場ごとの記録数</h3><p class="chart-sub">空白の文言行を除いた記録行数です。</p><div id="chart-venues" class="bars"></div></article><article class="chart-card"><h3>付箋の色・記録区分</h3><p class="chart-sub" id="chart-color-sub"></p><div id="chart-colors" class="bars"></div></article><article class="chart-card"><h3>グループ</h3><p class="chart-sub">福良公民館のみ班番号を収録。空欄は未記入として扱います。</p><div id="chart-groups" class="bars"></div></article><article class="chart-card wide"><h3>フローチャート項目</h3><p class="chart-sub">複数項目に対応する記録は項目ごとに数えます。福良公民館の「0」は項目番号として扱わず、未割当（0）にまとめています。福良小学校の「不明」は独立した区分として数えます。</p><div id="chart-flow" class="bars compact"></div></article></div>
+      <div class="chart-grid"><article class="chart-card"><h3>会場ごとの記録数</h3><p class="chart-sub">空白の文言行を除いた記録行数です。</p><div id="chart-venues" class="bars"></div></article><article class="chart-card"><h3>付箋の色・記録区分</h3><p class="chart-sub" id="chart-color-sub"></p><div id="chart-colors" class="bars"></div></article><article class="chart-card wide"><h3>フローチャート項目</h3><p class="chart-sub">複数項目に対応する記録は項目ごとに数えます。福良公民館の「0」は項目番号として扱わず、未割当（0）にまとめています。福良小学校の「不明」は独立した区分として数えます。</p><div id="chart-flow" class="bars compact"></div></article></div>
       <details class="methods"><summary>集計と読み方について</summary><ul><li>タブ付きの代替シートは重複を避けるため使わず、原シートを会場ごとに1つ採用しました。</li><li>繰り返し出た意見は統合せず、記録行をそのまま数えています。</li><li>空白の文言行は除外しました。分類欄の空欄は未記入として表示します。</li><li>会場間で付箋の色の意味は異なります。同じ色を同じ意味として比較しません。</li></ul></details>
     </section>
   </main>

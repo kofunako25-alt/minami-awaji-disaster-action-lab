@@ -2,6 +2,7 @@
   const data = window.WORKSHOP_DATA;
   const byId = Object.fromEntries(data.map(d => [d.id,d]));
   const schoolFlowUpdates = window.FUKURA_SCHOOL_FLOW || {};
+  (byId.elementary?.records || []).forEach(r => { r.flow = null; r.flowStatus = '完成版未掲載'; });
   (byId.elementary?.records || []).forEach(r => {
     const update = schoolFlowUpdates[String(r.sourceRow)];
     if (!update) return;
@@ -31,10 +32,10 @@
     const colors=[...new Set(records.map(r=>colorName(r.color)))].sort();
     $('color-filter').innerHTML=optionLabel('','すべて')+colors.map(x=>optionLabel(x,x)).join('');
     const flowKeys=[...new Set(records.flatMap(flowKeysForRecord))].sort((a,b)=>flowOptionLabel(a).localeCompare(flowOptionLabel(b),'ja',{numeric:true}));
-    $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
+    $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認'&&r.flowStatus!=='完成版未掲載')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
     $('color-help').textContent=selected.venue+'：'+selected.colorHelp;
     $('flow-note').textContent=selected.id==='elementary'
-      ? '福良小学校は完成版Excelの50件を反映しています。「不明」も原表記のまま表示し、対象外の記録は元データの番号を保っています。'
+      ? '福良小学校は完成版Excelの50件を反映しています。残る154件は完成版に記載がないため、旧番号を表示せず「完成版に記載なし」としています。「不明」は原表記のままです。'
       : '複数の番号がある記録は、番号ごとに絞り込み・集計します。';
   }
   function flowNumbers(raw){
@@ -43,18 +44,21 @@
     return s.split(/[・、,，;；\s]+/).filter(Boolean);
   }
   function flowKeysForRecord(r){
+    if(r.flowStatus==='完成版未掲載')return ['unlisted'];
     if(normalize(r.flow)==='不明')return ['unknown'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?nums.map(n=>'review:'+n):['review:blank'];
     return nums;
   }
   function flowOptionLabel(key){
+    if(key==='unlisted')return '完成版に記載なし';
     if(key==='unknown')return '不明';
     if(key==='review:blank')return '要確認（番号未確定）';
     if(key.startsWith('review:'))return `要確認：元番号 ${key.slice(7)}`;
     return key==='0'?'未割当（0）':`項目 ${key}`;
   }
   function flowDisplay(r){
+    if(r.flowStatus==='完成版未掲載')return ['完成版に記載なし'];
     if(normalize(r.flow)==='不明')return ['不明'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?[`番号要確認（元番号 ${nums.join('・')}）`]:['番号要確認'];
@@ -66,7 +70,7 @@
   function filteredRecords(){
     const venue=$('venue-filter').value, query=normalize($('search').value).toLowerCase(), color=$('color-filter').value,flow=$('flow-filter').value;
     return data.filter(d=>!venue||d.id===venue).flatMap(d=>d.records.map(r=>({...r,venue:d.venue,venueId:d.id}))).filter(r=>
-      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!flow||(flow==='__blank'?!normalize(r.flow)&&r.flowStatus!=='要確認':flowKeysForRecord(r).includes(flow))));
+      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!flow||(flow==='__blank'?!normalize(r.flow)&&r.flowStatus!=='要確認'&&r.flowStatus!=='完成版未掲載':flowKeysForRecord(r).includes(flow))));
   }
   function card(r){
     let tags=[r.venue,colorName(r.color)];
@@ -96,6 +100,7 @@
   }
   function flowParts(raw){
     const r=raw;
+    if(r.flowStatus==='完成版未掲載')return ['完成版に記載なし'];
     if(normalize(r.flow)==='不明')return ['不明'];
     const nums=flowNumbers(r.flow);
     if(r.flowStatus==='要確認')return nums.length?nums.map(n=>`要確認：元番号 ${n}`):['要確認（番号なし）'];

@@ -3,7 +3,6 @@
   const byId = Object.fromEntries(data.map(d => [d.id,d]));
   const schoolFlowUpdates = window.FUKURA_SCHOOL_FLOW || {};
   (byId.elementary?.records || []).forEach(r => {
-    delete r.group;
     const update = schoolFlowUpdates[String(r.sourceRow)];
     if (!update) return;
     r.flow = update.flow;
@@ -29,12 +28,8 @@
   }
   function refreshFilters(){
     const selected=byId[$('venue-filter').value]||data[0], records=selected.records;
-    $('group-filter-wrap').hidden=selected.id!=='primary';
-    if(selected.id!=='primary')$('group-filter').value='';
     const colors=[...new Set(records.map(r=>colorName(r.color)))].sort();
     $('color-filter').innerHTML=optionLabel('','すべて')+colors.map(x=>optionLabel(x,x)).join('');
-    const groups=[...new Set(records.map(r=>normalize(r.group)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja',{numeric:true}));
-    $('group-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.group))?optionLabel('__blank','未記入'): '')+groups.map(x=>optionLabel(x,x==='0'?'未記入/0':`${x}班`)).join('');
     const flowKeys=[...new Set(records.flatMap(flowKeysForRecord))].sort((a,b)=>flowOptionLabel(a).localeCompare(flowOptionLabel(b),'ja',{numeric:true}));
     $('flow-filter').innerHTML=optionLabel('','すべて')+(records.some(r=>!normalize(r.flow)&&r.flowStatus!=='要確認')?optionLabel('__blank','未記入'): '')+flowKeys.map(x=>optionLabel(x,flowOptionLabel(x))).join('');
     $('color-help').textContent=selected.venue+'：'+selected.colorHelp;
@@ -69,16 +64,12 @@
     return [nums.map(n=>`項目 ${n}`).join('・')+suffix];
   }
   function filteredRecords(){
-    const venue=$('venue-filter').value, query=normalize($('search').value).toLowerCase(), color=$('color-filter').value,group=$('group-filter').value,flow=$('flow-filter').value;
+    const venue=$('venue-filter').value, query=normalize($('search').value).toLowerCase(), color=$('color-filter').value,flow=$('flow-filter').value;
     return data.filter(d=>!venue||d.id===venue).flatMap(d=>d.records.map(r=>({...r,venue:d.venue,venueId:d.id}))).filter(r=>
-      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!group||(group==='__blank'?!normalize(r.group):normalize(r.group)===group))&&(!flow||(flow==='__blank'?!normalize(r.flow)&&r.flowStatus!=='要確認':flowKeysForRecord(r).includes(flow))));
+      (!query||r.text.toLowerCase().includes(query))&&(!color||colorName(r.color)===color)&&(!flow||(flow==='__blank'?!normalize(r.flow)&&r.flowStatus!=='要確認':flowKeysForRecord(r).includes(flow))));
   }
   function card(r){
     let tags=[r.venue,colorName(r.color)];
-    if(r.venueId==='primary'){
-      if(r.group) tags.push(r.group==='0'?'グループ未記入/0':`グループ ${r.group}`);
-      else tags.push('グループ情報なし');
-    }
     tags.push(...flowDisplay(r));
     return `<article class="idea-card"><div class="idea-text">${esc(r.text)}</div><div class="idea-meta">${tags.map((t,i)=>`<span class="tag ${i===1?'color-'+esc(colorName(r.color)):''}">${esc(t)}</span>`).join('')}</div></article>`;
   }
@@ -115,24 +106,19 @@
   }
   function renderDashboard(){
     const selected=byId[$('dashboard-venue').value]||data[0], all=data.flatMap(d=>d.records.map(r=>({...r,venueId:d.id})));
-    $('chart-groups').closest('.chart-card').hidden=selected.id!=='primary';
     $('dashboard-total').textContent=`${selected.records.length} 件（記録行）`;
     bars('chart-venues',data.map(d=>[d.venue,d.records.length]),Math.max(...data.map(d=>d.records.length)));
     const colorCounts={}; selected.records.forEach(r=>{const label=colorName(r.color);colorCounts[label]=(colorCounts[label]||0)+1;});
     const meanings=selected.id==='primary'?{'青':'個人ができる対策','黄':'地域での役割・職能でできる対策'}:selected.id==='elementary'?{'黄':'困りごと','赤':'対策','青':'将来の職業から考えたこと'}:{'赤':'困りごと','黄':'高校生としてできる対策'};
     $('chart-color-sub').textContent=selected.venue+'：'+selected.colorHelp;
     bars('chart-colors',Object.entries(colorCounts).map(([c,n])=>[`${c}：${meanings[c]||'意味未確認'}`,n]),Math.max(1,...Object.values(colorCounts)));
-    if(selected.id==='primary'){
-      const groups={}; selected.records.forEach(r=>{const k=normalize(r.group)||'未記入';groups[k]=(groups[k]||0)+1;});
-      bars('chart-groups',Object.entries(groups).sort((a,b)=>a[0]==='未記入'?1:b[0]==='未記入'?-1:a[0].localeCompare(b[0],'ja',{numeric:true})).map(([k,v])=>[k==='未記入'?k:`${k}班`,v]),Math.max(...Object.values(groups)));
-    } else bars('chart-groups',[],1,'この会場の原シートにグループ番号欄はありません。');
     const flows={}; selected.records.forEach(r=>{const parts=flowParts(r);if(!parts.length)flows['未記入']=(flows['未記入']||0)+1;else parts.forEach(k=>flows[k]=(flows[k]||0)+1);});
     const flowEntries=Object.entries(flows).sort((a,b)=>a[0]==='未記入'?1:b[0]==='未記入'?-1:a[0].localeCompare(b[0],'ja',{numeric:true}));
     bars('chart-flow',flowEntries,Math.max(1,...Object.values(flows)));
   }
   document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{activePage=b.dataset.page;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===`page-${activePage}`));if(activePage==='analysis')renderDashboard();}));
   setupSelects(); renderScenarios(); renderIdeas(); renderDashboard();
-  ['search','color-filter','group-filter','flow-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{shown=30;renderIdeas();}));
+  ['search','color-filter','flow-filter'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',()=>{shown=30;renderIdeas();}));
   $('venue-filter').addEventListener('change',()=>{refreshFilters();shown=30;renderIdeas();});
   $('clear-filters').addEventListener('click',()=>{$('search').value='';$('venue-filter').value='';refreshFilters();shown=30;renderIdeas();});
   $('load-more').addEventListener('click',()=>{shown+=30;renderIdeas();});

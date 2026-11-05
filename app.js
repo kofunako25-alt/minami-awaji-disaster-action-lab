@@ -2,11 +2,13 @@
   const data = window.WORKSHOP_DATA;
   const byId = Object.fromEntries(data.map(d => [d.id,d]));
   const schoolFlowUpdates = window.FUKURA_SCHOOL_FLOW || {};
-  (byId.elementary?.records || []).forEach(r => { r.flow = null; r.flowStatus = '完成版未掲載'; });
+  (byId.elementary?.records || []).forEach(r => { r.flow = null; r.flowStatus = '完成版未掲載'; r.flowItem = null; r.flowReason = null; });
   (byId.elementary?.records || []).forEach(r => {
     const update = schoolFlowUpdates[String(r.sourceRow)];
     if (!update) return;
     r.flow = update.flow;
+    r.flowItem = update.item || null;
+    r.flowReason = update.reason || null;
     if (update.status) r.flowStatus = update.status;
     else delete r.flowStatus;
   });
@@ -75,7 +77,8 @@
   function card(r){
     let tags=[r.venue,colorName(r.color)];
     tags.push(...flowDisplay(r));
-    return `<article class="idea-card"><div class="idea-text">${esc(r.text)}</div><div class="idea-meta">${tags.map((t,i)=>`<span class="tag ${i===1?'color-'+esc(colorName(r.color)):''}">${esc(t)}</span>`).join('')}</div></article>`;
+    const detail=r.flowItem?`<p class="idea-detail"><b>対応するフローチャート項目：</b>${esc(r.flowItem)}</p>`:r.flowReason?`<p class="idea-detail"><b>不明の理由：</b>${esc(r.flowReason)}</p>`:'';
+    return `<article class="idea-card"><div class="idea-text">${esc(r.text)}</div><div class="idea-meta">${tags.map((t,i)=>`<span class="tag ${i===1?'color-'+esc(colorName(r.color)):''}">${esc(t)}</span>`).join('')}</div>${detail}</article>`;
   }
   function renderIdeas(){
     const records=filteredRecords(), page=records.slice(0,shown);
